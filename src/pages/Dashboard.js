@@ -2,23 +2,34 @@ import { useEffect, useState } from "react";
 import Form from "../components/Form";
 import Header from "../components/Header";
 import Resume from "../components/Resume";
+import { api } from "../api";
 
 const Dashboard = () => {
-  const data = localStorage.getItem("transactions");
-  const [transactionsList, setTransactionsList] = useState(
-    data ? JSON.parse(data) : []
-  );
   const [income, setIncome] = useState(0);
   const [expense, setExpense] = useState(0);
   const [total, setTotal] = useState(0);
+  const [transactionsList, setTransactionsList] = useState([]);
+
+  async function getTransactions() {
+    try {
+      const res = await api.get("/transacoes");
+      setTransactionsList(res.data);
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  useEffect(() => {
+    getTransactions();
+  }, []);
 
   useEffect(() => {
     const amountExpense = transactionsList
-      .filter((item) => item.expense)
+      .filter((item) => item.type === "saida")
       .map((transaction) => Number(transaction.amount));
 
     const amountIncome = transactionsList
-      .filter((item) => !item.expense)
+      .filter((item) => item.type === "entrada")
       .map((transaction) => Number(transaction.amount));
 
     const expense = amountExpense.reduce((acc, cur) => acc + cur, 0).toFixed(2);
@@ -31,12 +42,19 @@ const Dashboard = () => {
     setTotal(`${Number(income) < Number(expense) ? "-" : ""}R$ ${total}`);
   }, [transactionsList]);
 
-  const handleAdd = (transaction) => {
-    const newArrayTransactions = [...transactionsList, transaction];
-
-    setTransactionsList(newArrayTransactions);
-
-    localStorage.setItem("transactions", JSON.stringify(newArrayTransactions));
+  const handleAdd = async (transaction) => {
+    try {
+      const data = await api.post("/transacoes", {
+        amount: Number(transaction.amount),
+        type: transaction.expense === true ? "saida" : "entrada",
+        userId: localStorage.getItem("userId"),
+        categoria: transaction.desc,
+      });
+      window.location.reload();
+    } catch (err) {
+      console.log(err);
+      alert("Falha ao adicionar transação");
+    }
   };
 
   return (

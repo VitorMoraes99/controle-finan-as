@@ -35,7 +35,7 @@ const Form = ({ handleAdd, transactionsList, setTransactionsList }) => {
     <>
       <C.Container>
         <C.InputContent>
-          <C.Label>Descrição</C.Label>
+          <C.Label>Categoria</C.Label>
           <C.Input value={desc} onChange={(e) => setDesc(e.target.value)} />
         </C.InputContent>
         <C.InputContent>
